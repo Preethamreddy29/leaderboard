@@ -152,14 +152,13 @@ function App() {
   
 
     // **CRITICAL FIX**: Check URL parameters immediately for success redirect
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-
-    if (sessionId) {
-        // If sessionId exists, immediately render the success state
-        // We call a function that can return JSX directly.
-        return handleSuccessRender(showToast, setCurrentPage); 
+    useEffect(() => {
+    const successData = localStorage.getItem('payment-success-redirect');
+    if (successData) {
+        localStorage.removeItem('payment-success-redirect');
+        setCurrentPage('success');
     }
+}, []);
 
     // --- Payment Logic ---
   const handleJoinChallenge = async () => {
