@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [react()],
   // FINAL BUILD CONFIGURATION
   build: {
-    outDir: 'dist' // Ensure output folder is named 'dist'
+    // Use the absolute root path for Vercel deployment
+    base: '/', 
+    // Ensure assets are placed in the output directory
+    outDir: 'dist' 
   }
 })
