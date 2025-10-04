@@ -5,11 +5,7 @@ import axios from 'axios';
 import './App.css'; 
 
 // --- Configuration ---
-// Note: We use the same hardcoded email across all components for the test flow.
 const TEST_USER_EMAIL = "testuser@challenge.com";
-
-// **FIXED:** BASE_API_URL is removed entirely to rely on Vercel's root domain routing (/) 
-// The API calls will now start with '/api/' which Vercel handles correctly.
 
 // Helper component for the "Payment received" toast
 const Toast = ({ message }) => (
@@ -24,7 +20,6 @@ const Leaderboard = () => {
 
     const fetchLeaderboard = async () => {
         try {
-            // **FIXED:** API call directly to /api/upload-entry
             const response = await axios.get('/api/upload-entry');
             setLeaderboard(response.data.leaderboard || []);
         } catch (error) {
@@ -32,10 +27,8 @@ const Leaderboard = () => {
         }
     };
     
-    // Fetch once on load
     useEffect(() => {
         fetchLeaderboard();
-        // Set a shorter polling interval for the leaderboard to appear "instantly"
         const intervalId = setInterval(fetchLeaderboard, 1500); 
         return () => clearInterval(intervalId);
     }, []);
@@ -82,7 +75,7 @@ const UploadForm = ({ onUploadSuccess }) => {
         }
 
         try {
-            // **FIXED:** Changed endpoint to /api/upload-entry and corrected syntax
+            // CORRECTED: Submission goes to upload-entry
             await axios.post('/api/upload-entry', {
                 title,
                 url,
@@ -93,7 +86,6 @@ const UploadForm = ({ onUploadSuccess }) => {
             setUrl('');
             setLoading(false);
             
-            // Trigger an event to instantly refresh the leaderboard
             onUploadSuccess(); 
 
         } catch (error) {
@@ -129,12 +121,28 @@ const UploadForm = ({ onUploadSuccess }) => {
     );
 };
 
+// --- RENDER COMPONENT FUNCTIONS ---
+
+// Function to handle the success state rendering and logic
+const handleSuccessRender = (showToast, setCurrentPage) => {
+    showToast("Payment received.");
+    setTimeout(() => {
+        setCurrentPage('dashboard');
+    }, 1000);
+    
+    return (
+        <div style={{ textAlign: 'center', paddingTop: '100px' }}>
+            <h1>Thank You!</h1>
+            <p>Payment successful. Redirecting to your dashboard now...</p>
+        </div>
+    );
+};
 
 // Main Application Component
 function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [toastMessage, setToastMessage] = useState(null);
-  const [leaderboardKey, setLeaderboardKey] = useState(0); // Used to force leaderboard refresh
+  const [leaderboardKey, setLeaderboardKey] = useState(0); 
 
   // --- Utility Functions ---
   const showToast = (message) => {
@@ -142,21 +150,21 @@ function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
   
-  // Checks URL on initial load for success redirection
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-    
-    if (sessionId) {
-        // Stripe has redirected us back after payment
-        setCurrentPage('success');
-    }
-  }, []);
 
-  // --- Payment Logic ---
+    // **CRITICAL FIX**: Check URL parameters immediately for success redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+
+    if (sessionId) {
+        // If sessionId exists, immediately render the success state
+        // We call a function that can return JSX directly.
+        return handleSuccessRender(showToast, setCurrentPage); 
+    }
+
+    // --- Payment Logic ---
   const handleJoinChallenge = async () => {
     try {
-      // **FIXED:** API call directly to /api/create-checkout-session
+      // API call directly to /api/create-checkout-session
       const response = await axios.post('/api/create-checkout-session');
       
       // Redirect the user to the Stripe checkout page
@@ -176,7 +184,7 @@ function App() {
     useEffect(() => {
         const fetchTickets = async () => {
             try {
-                // **FIXED:** API call directly to /api/get-tickets
+                // API call directly to /api/get-tickets
                 const response = await axios.get(`/api/get-tickets?email=${TEST_USER_EMAIL}`);
                 setTicketCount(response.data.ticketCount);
             } catch (error) {
@@ -216,17 +224,12 @@ function App() {
   // --- Rendering Functions ---
   
   if (currentPage === 'success') {
-      // Show the success toast and switch to the dashboard after a short delay
-      showToast("Payment received.");
-      setTimeout(() => {
-          setCurrentPage('dashboard');
-      }, 1000);
-      
+      // This path is now only reached after the timer in handleSuccessRender has finished.
       return (
-          <div style={{ textAlign: 'center', paddingTop: '100px' }}>
-              <h1>Thank You!</h1>
-              <p>Payment successful. Redirecting to your dashboard now...</p>
-          </div>
+          <>
+              <Dashboard />
+              {toastMessage && <Toast message={toastMessage} />}
+          </>
       );
   }
   
