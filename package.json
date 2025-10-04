@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --base /",
     "lint": "eslint .",
     "preview": "vite preview",
     "start-api": "node server/index.js",
