@@ -2,7 +2,7 @@
 
 // IMPORTANT: Vercel loads environment variables automatically.
 // DO NOT include 'dotenv' here.
-
+import { buffer } from 'micro';
 import Stripe from 'stripe';
 import mongoose from 'mongoose';
 import { buffer } from 'micro'; // Tool to read the raw request body

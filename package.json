@@ -5,11 +5,11 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "lint": "eslint .",
-  "preview": "vite preview"
-},
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "axios": "^1.12.2",
     "body-parser": "^2.2.0",
@@ -17,6 +17,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "micro": "^10.0.1",
     "mongoose": "^8.19.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
