@@ -1,35 +1,15 @@
 <!doctype html>
 <html lang="en">
   <head>
-   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>fileupload</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fileupload</title>
 
-  <script>
-    if (window.location.search.includes('session_id=')) {
-      const url = new URL(window.location);
-      const params = new URLSearchParams(url.search);
-      
-      // Store the session ID and email temporarily
-      const sessionId = params.get('session_id');
-      const userEmail = params.get('email');
-      
-      // Clear the query string and reload the page cleanly
-      window.history.replaceState(null, null, '/'); 
-      
-      // Set a flag in local storage to trigger the success logic on the clean page
-      localStorage.setItem('payment-success-redirect', JSON.stringify({ sessionId, userEmail }));
-      
-      // Force a full, clean browser reload
-      window.location.reload(); 
-    }
-  </script>
-  <script type="module" crossorigin src="/assets/index-BgacBnkO.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-D8b4DHJx.css">
+    <script type="module" crossorigin src="/assets/index-BgacBnkO.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D8b4DHJx.css">
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
