@@ -78,7 +78,7 @@ export default async function handler(req, res) {
                 },
             ],
             // Use the dynamic Vercel host for success/cancel URLs
-            success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}&email=${userEmail}`,
+            success_url: `${req.headers.origin}/?session_id={CHECKOUT_SESSION_ID}&email=${userEmail}`,
             cancel_url: `${req.headers.origin}/`,
             
             customer_email: userEmail,
