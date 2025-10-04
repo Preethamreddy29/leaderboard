@@ -5,11 +5,11 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "build": "echo \"Building static files...\" && mkdir -p dist && echo \"<html><body>Redirecting...</body></html>\" > dist/index.html",
-    "dev": "vite",
-    "start-api": "node server/index.js",
-    "start-dev": "concurrently \"npm run dev\" \"npm run start-api\""
-  },
+  "dev": "vite",
+  "build": "vite build",
+  "lint": "eslint .",
+  "preview": "vite preview"
+},
   "dependencies": {
     "axios": "^1.12.2",
     "body-parser": "^2.2.0",
