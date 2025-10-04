@@ -152,13 +152,13 @@ function App() {
   
 
     // **CRITICAL FIX**: Check URL parameters immediately for success redirect
-    useEffect(() => {
-    const successData = localStorage.getItem('payment-success-redirect');
-    if (successData) {
-        localStorage.removeItem('payment-success-redirect');
-        setCurrentPage('success');
-    }
-}, []);
+    const urlParams = new URLSearchParams(window.location.search);
+const sessionId = urlParams.get('session_id');
+
+// This logic correctly directs the component to the success render path
+if (sessionId) {
+    return handleSuccessRender(showToast, setCurrentPage); 
+}
 
     // --- Payment Logic ---
   const handleJoinChallenge = async () => {
