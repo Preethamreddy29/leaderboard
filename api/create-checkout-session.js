@@ -1,17 +1,15 @@
 // api/create-checkout-session.js
 
-// NOTE: Vercel automatically loads environment variables (STRIPE_SECRET_KEY, MONGO_URI, etc.)
-// DO NOT include 'dotenv' here.
-
-import Stripe from 'stripe';
-import mongoose from 'mongoose';
+// --- 1. CommonJS Imports (The Fix!) ---
+const Stripe = require('stripe');
+const mongoose = require('mongoose');
 
 // Initialize Stripe (Vercel automatically pulls the key from process.env)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2024-06-20',
 });
 
-// --- 1. DATABASE CONNECTION LOGIC (Copied from former db/connect.js) ---
+// --- 2. DATABASE CONNECTION LOGIC ---
 const MONGO_URI = process.env.MONGO_URI;
 let cachedDb = null;
 
@@ -22,9 +20,9 @@ const connectToDatabase = async () => {
     }
 
     try {
-        // Use the connection options suitable for serverless/Vercel
         const db = await mongoose.connect(MONGO_URI);
-        cachedDb = db.connection.db;
+        // Using db.connections[0].db or simply db to cache is often safer in Vercel.
+        cachedDb = db; 
         console.log('New MongoDB connection established');
         return cachedDb;
     } catch (error) {
@@ -33,7 +31,7 @@ const connectToDatabase = async () => {
     }
 }
 
-// --- 2. MONGOOSE SCHEMAS/MODELS (Copied from former server/index.js) ---
+// --- 3. MONGOOSE SCHEMAS/MODELS ---
 const UserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     ticketCount: { type: Number, required: true, default: 0 },
@@ -49,22 +47,32 @@ const EntrySchema = new mongoose.Schema({
 const Entry = mongoose.models.Entry || mongoose.model('Entry', EntrySchema);
 
 
-// --- 3. VERCEL SERVERLESS HANDLER (The main function Vercel runs) ---
-export default async function handler(req, res) {
+// --- 4. VERCEL SERVERLESS HANDLER (The main function Vercel runs) ---
+module.exports = async function handler(req, res) { // <-- CommonJS Export
+    // Set CORS headers for better compatibility (Optional, but good practice)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
     if (req.method !== 'POST') {
+        // Handle CORS preflight requests
+        if (req.method === 'OPTIONS') {
+            return res.status(200).end();
+        }
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
     
-    // NOTE: Hardcoded email for test flow; Vercel will handle CORS automatically
+    // NOTE: Hardcoded email for test flow; 
     const userEmail = "testuser@challenge.com"; 
 
     try {
-        // 1. Database connection is attempted on every API call
+        // 1. Database connection
         await connectToDatabase();
         let user = await User.findOne({ email: userEmail });
         
         if (!user) {
-            user = await User.create({ email: userEmail, ticketCount: 0 });
+            // Ensure the cached model is being used correctly by accessing mongoose.connection.models
+            user = await mongoose.models.User.create({ email: userEmail, ticketCount: 0 });
         }
 
         // 2. Create the Stripe Checkout Session
@@ -73,12 +81,13 @@ export default async function handler(req, res) {
             payment_method_types: ['card'],
             line_items: [
                 {
-                    price: process.env.CHALLENGE_PRICE_ID, // Loaded from Vercel ENV
+                    price: process.env.CHALLENGE_PRICE_ID, // CRUCIAL: Must be set in Vercel
                     quantity: 1,
                 },
             ],
             // Use the dynamic Vercel host for success/cancel URLs
-            success_url: `${req.headers.origin}/?session_id={CHECKOUT_SESSION_ID}&email=${userEmail}`,            cancel_url: `${req.headers.origin}/`,
+            success_url: `${req.headers.origin}/?session_id={CHECKOUT_SESSION_ID}&email=${userEmail}`, 
+            cancel_url: `${req.headers.origin}/`,
             
             customer_email: userEmail,
             metadata: { userId: user._id.toString() } 
@@ -88,7 +97,9 @@ export default async function handler(req, res) {
         return res.status(200).json({ url: session.url });
 
     } catch (error) {
+        // Log the full error to Vercel logs
         console.error('Stripe session creation failed:', error);
+        
         // Send a generic 500 status to the frontend
         return res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
